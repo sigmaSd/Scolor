@@ -1,10 +1,9 @@
 //! Simple ansi colors
 //! ```rust,no_run
-//! use scolor::{Color, ColorExt};
+//! use scolor::ColorExt;
 //!
 //! println!("{}", "hello".red().bold().underline());
 //! println!("{}", "world".green().red_bg().italic());
-//! println!("{}", "!".rgb_fg(123, 12, 50));
 //! ```
 // Credits to https://stackoverflow.com/a/33206814
 use std::fmt::Display;

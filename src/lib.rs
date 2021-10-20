@@ -9,42 +9,45 @@
 use std::fmt::Display;
 
 pub trait Color {
-    fn rgb(&self, r: u8, g: u8, b: u8, ctype: ColorType) -> ColorString;
-    fn style(&self, effect: Effect) -> ColorString;
+    type D;
+    fn rgb(&self, r: u8, g: u8, b: u8, ctype: ColorType) -> ColorFmt<Self::D>;
+    fn style(&self, effect: Effect) -> ColorFmt<Self::D>;
 }
 
 pub trait ColorExt {
-    fn rgb_fg(&self, r: u8, g: u8, b: u8) -> ColorString;
-    fn rgb_bg(&self, r: u8, g: u8, b: u8) -> ColorString;
-    fn red(&self) -> ColorString;
-    fn red_bg(&self) -> ColorString;
-    fn green(&self) -> ColorString;
-    fn green_bg(&self) -> ColorString;
-    fn yellow(&self) -> ColorString;
-    fn yellow_bg(&self) -> ColorString;
-    fn blue(&self) -> ColorString;
-    fn blue_bg(&self) -> ColorString;
-    fn light_blue(&self) -> ColorString;
-    fn light_blue_bg(&self) -> ColorString;
-    fn italic(&self) -> ColorString;
-    fn bold(&self) -> ColorString;
-    fn underline(&self) -> ColorString;
-    fn crossed_out(&self) -> ColorString;
+    type D;
+    fn rgb_fg(&self, r: u8, g: u8, b: u8) -> ColorFmt<Self::D>;
+    fn rgb_bg(&self, r: u8, g: u8, b: u8) -> ColorFmt<Self::D>;
+    fn red(&self) -> ColorFmt<Self::D>;
+    fn red_bg(&self) -> ColorFmt<Self::D>;
+    fn green(&self) -> ColorFmt<Self::D>;
+    fn green_bg(&self) -> ColorFmt<Self::D>;
+    fn yellow(&self) -> ColorFmt<Self::D>;
+    fn yellow_bg(&self) -> ColorFmt<Self::D>;
+    fn blue(&self) -> ColorFmt<Self::D>;
+    fn blue_bg(&self) -> ColorFmt<Self::D>;
+    fn light_blue(&self) -> ColorFmt<Self::D>;
+    fn light_blue_bg(&self) -> ColorFmt<Self::D>;
+    fn italic(&self) -> ColorFmt<Self::D>;
+    fn bold(&self) -> ColorFmt<Self::D>;
+    fn underline(&self) -> ColorFmt<Self::D>;
+    fn crossed_out(&self) -> ColorFmt<Self::D>;
 }
 
 impl<T> Color for T
 where
     T: Display,
 {
-    fn rgb(&self, r: u8, g: u8, b: u8, ctype: ColorType) -> ColorString {
-        ColorString {
+    type D = T;
+    fn rgb(&self, r: u8, g: u8, b: u8, ctype: ColorType) -> ColorFmt<Self::D> {
+        ColorFmt {
             string: self,
             color: Some(Rgb { r, g, b, ctype }),
             effect: None,
         }
     }
-    fn style(&self, effect: Effect) -> ColorString {
-        ColorString {
+    fn style(&self, effect: Effect) -> ColorFmt<Self::D> {
+        ColorFmt {
             string: self,
             color: None,
             effect: Some(effect),
@@ -56,52 +59,53 @@ impl<T> ColorExt for T
 where
     T: Color,
 {
-    fn rgb_fg(&self, r: u8, g: u8, b: u8) -> ColorString {
+    type D = <T as Color>::D;
+    fn rgb_fg(&self, r: u8, g: u8, b: u8) -> ColorFmt<Self::D> {
         self.rgb(r, g, b, ColorType::Fg)
     }
-    fn rgb_bg(&self, r: u8, g: u8, b: u8) -> ColorString {
+    fn rgb_bg(&self, r: u8, g: u8, b: u8) -> ColorFmt<Self::D> {
         self.rgb(r, g, b, ColorType::Bg)
     }
-    fn red(&self) -> ColorString {
+    fn red(&self) -> ColorFmt<Self::D> {
         self.rgb_fg(255, 0, 0)
     }
-    fn red_bg(&self) -> ColorString {
+    fn red_bg(&self) -> ColorFmt<Self::D> {
         self.rgb_bg(255, 0, 0)
     }
-    fn green(&self) -> ColorString {
+    fn green(&self) -> ColorFmt<Self::D> {
         self.rgb_fg(0, 255, 0)
     }
-    fn green_bg(&self) -> ColorString {
+    fn green_bg(&self) -> ColorFmt<Self::D> {
         self.rgb_bg(0, 255, 0)
     }
-    fn yellow(&self) -> ColorString {
+    fn yellow(&self) -> ColorFmt<Self::D> {
         self.rgb_fg(255, 255, 0)
     }
-    fn yellow_bg(&self) -> ColorString {
+    fn yellow_bg(&self) -> ColorFmt<Self::D> {
         self.rgb_bg(255, 255, 0)
     }
-    fn blue(&self) -> ColorString {
+    fn blue(&self) -> ColorFmt<Self::D> {
         self.rgb_fg(0, 0, 255)
     }
-    fn blue_bg(&self) -> ColorString {
+    fn blue_bg(&self) -> ColorFmt<Self::D> {
         self.rgb_bg(0, 0, 255)
     }
-    fn light_blue(&self) -> ColorString {
+    fn light_blue(&self) -> ColorFmt<Self::D> {
         self.rgb_fg(0, 150, 255)
     }
-    fn light_blue_bg(&self) -> ColorString {
+    fn light_blue_bg(&self) -> ColorFmt<Self::D> {
         self.rgb_bg(0, 150, 255)
     }
-    fn italic(&self) -> ColorString {
+    fn italic(&self) -> ColorFmt<Self::D> {
         self.style(Effect::Italic)
     }
-    fn bold(&self) -> ColorString {
+    fn bold(&self) -> ColorFmt<Self::D> {
         self.style(Effect::Bold)
     }
-    fn underline(&self) -> ColorString {
+    fn underline(&self) -> ColorFmt<Self::D> {
         self.style(Effect::Underline)
     }
-    fn crossed_out(&self) -> ColorString {
+    fn crossed_out(&self) -> ColorFmt<Self::D> {
         self.style(Effect::CrossedOut)
     }
 }
@@ -153,13 +157,13 @@ impl std::fmt::Display for Rgb {
 }
 
 #[doc(hidden)]
-pub struct ColorString<'a> {
-    string: &'a dyn Display,
+pub struct ColorFmt<'a, D> {
+    string: &'a D,
     color: Option<Rgb>,
     effect: Option<Effect>,
 }
 
-impl Display for ColorString<'_> {
+impl<D: Display> Display for ColorFmt<'_, D> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         const START_DEL: &str = "\x1b[";
         const COMPONENT_DEL: &str = ";";

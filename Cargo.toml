@@ -1,8 +1,9 @@
 [package]
 name = "scolor"
-version = "4.0.1"
+version = "4.0.2"
 edition = "2021"
 description = "Simple ansi colors"
+repository = "https://github.com/sigmaSd/scolor"
 license = "MIT"
 keywords = ["color", "ansi", "terminal"]
 

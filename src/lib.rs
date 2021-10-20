@@ -4,18 +4,25 @@
 //!
 //! println!("{}", "hello".red().bold().underline());
 //! println!("{}", "world".green().red_bg().italic());
-//! println!("{}", "!".rgb(123,12,50));
+//! println!(
+//!     "{}",
+//!     "world".rgb_with_style(120, 120, 11, ColorType::Fg, Effect::Italic)
+//! );
+//! println!("{}", "!".rgb_fg(123, 12, 50));
 //! ```
 // Credits to https://stackoverflow.com/a/33206814
 use std::fmt::Display;
 
 pub trait Color {
-    fn rgb(&self, r: u8, g: u8, b: u8) -> ColorString;
-    fn rgb_bg(&self, r: u8, g: u8, b: u8) -> ColorString;
+    fn rgb(&self, r: u8, g: u8, b: u8, ctype: ColorType) -> ColorString;
     fn style(&self, effect: Effect) -> ColorString;
+    /// This is a little bit more performant than `str.rgb(..).style(..)`
+    fn rgb_with_style(&self, r: u8, g: u8, b: u8, ctype: ColorType, effect: Effect) -> ColorString;
 }
 
 pub trait ColorExt {
+    fn rgb_fg(&self, r: u8, g: u8, b: u8) -> ColorString;
+    fn rgb_bg(&self, r: u8, g: u8, b: u8) -> ColorString;
     fn red(&self) -> ColorString;
     fn red_bg(&self) -> ColorString;
     fn green(&self) -> ColorString;
@@ -36,24 +43,25 @@ impl<T> Color for T
 where
     T: Display,
 {
-    fn rgb(&self, r: u8, g: u8, b: u8) -> ColorString {
+    fn rgb(&self, r: u8, g: u8, b: u8, ctype: ColorType) -> ColorString {
         ColorString {
             string: self,
-            color: Box::new(FG(r, g, b)),
+            color: Some(Rgb { r, g, b, ctype }),
+            effect: None,
         }
     }
-
-    fn rgb_bg(&self, r: u8, g: u8, b: u8) -> ColorString {
-        ColorString {
-            string: self,
-            color: Box::new(BG(r, g, b)),
-        }
-    }
-
     fn style(&self, effect: Effect) -> ColorString {
         ColorString {
             string: self,
-            color: Box::new(effect),
+            color: None,
+            effect: Some(effect),
+        }
+    }
+    fn rgb_with_style(&self, r: u8, g: u8, b: u8, ctype: ColorType, effect: Effect) -> ColorString {
+        ColorString {
+            string: self,
+            color: Some(Rgb { r, g, b, ctype }),
+            effect: Some(effect),
         }
     }
 }
@@ -62,32 +70,38 @@ impl<T> ColorExt for T
 where
     T: Color,
 {
+    fn rgb_fg(&self, r: u8, g: u8, b: u8) -> ColorString {
+        self.rgb(r, g, b, ColorType::Fg)
+    }
+    fn rgb_bg(&self, r: u8, g: u8, b: u8) -> ColorString {
+        self.rgb(r, g, b, ColorType::Bg)
+    }
     fn red(&self) -> ColorString {
-        self.rgb(255, 0, 0)
+        self.rgb_fg(255, 0, 0)
     }
     fn red_bg(&self) -> ColorString {
         self.rgb_bg(255, 0, 0)
     }
     fn green(&self) -> ColorString {
-        self.rgb(0, 255, 0)
+        self.rgb_fg(0, 255, 0)
     }
     fn green_bg(&self) -> ColorString {
         self.rgb_bg(0, 255, 0)
     }
     fn yellow(&self) -> ColorString {
-        self.rgb(255, 255, 0)
+        self.rgb_fg(255, 255, 0)
     }
     fn yellow_bg(&self) -> ColorString {
         self.rgb_bg(255, 255, 0)
     }
     fn blue(&self) -> ColorString {
-        self.rgb(0, 0, 255)
+        self.rgb_fg(0, 0, 255)
     }
     fn blue_bg(&self) -> ColorString {
         self.rgb_bg(0, 0, 255)
     }
     fn light_blue(&self) -> ColorString {
-        self.rgb(0, 150, 255)
+        self.rgb_fg(0, 150, 255)
     }
     fn light_blue_bg(&self) -> ColorString {
         self.rgb_bg(0, 150, 255)
@@ -128,38 +142,56 @@ impl std::fmt::Display for Effect {
     }
 }
 
+pub enum ColorType {
+    Fg,
+    Bg,
+}
+
+struct Rgb {
+    r: u8,
+    g: u8,
+    b: u8,
+    ctype: ColorType,
+}
+
+impl std::fmt::Display for Rgb {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        const FG_DEL: &str = "38;2";
+        const BG_DEL: &str = "48;2";
+        let del = match self.ctype {
+            ColorType::Fg => FG_DEL,
+            ColorType::Bg => BG_DEL,
+        };
+        write!(f, "{};{};{};{}", del, self.r, self.g, self.b)
+    }
+}
+
 #[doc(hidden)]
 pub struct ColorString<'a> {
     string: &'a dyn Display,
-    color: Box<dyn Display>,
+    color: Option<Rgb>,
+    effect: Option<Effect>,
 }
 
 impl Display for ColorString<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         const START_DEL: &str = "\x1b[";
+        const COMPONENT_DEL: &str = ";";
         const COLOR_END_DEL: &str = "m";
         const END_DEL: &str = "\x1b[0m";
+
         write!(f, "{}", START_DEL)?;
-        write!(f, "{}", self.color)?;
+        if let Some(ref color) = self.color {
+            write!(f, "{}", color)?;
+        }
+        if let Some(ref effect) = self.effect {
+            if self.color.is_some() {
+                write!(f, "{}", COMPONENT_DEL)?;
+            }
+            write!(f, "{}", effect)?;
+        }
         write!(f, "{}", COLOR_END_DEL)?;
         write!(f, "{}", self.string)?;
         write!(f, "{}", END_DEL)
-    }
-}
-
-struct FG(u8, u8, u8);
-
-impl std::fmt::Display for FG {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        const FG_DEL: &str = "38;2";
-        write!(f, "{};{};{};{}", FG_DEL, self.0, self.1, self.2)
-    }
-}
-struct BG(u8, u8, u8);
-
-impl std::fmt::Display for BG {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        const BG_DEL: &str = "48;2";
-        write!(f, "{};{};{};{}", BG_DEL, self.0, self.1, self.2)
     }
 }

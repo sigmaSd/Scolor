@@ -1,6 +1,6 @@
 # scolor
 
-Simple ansi colors
+Simple Ansi Colors (strives for ~=0 cost)
 ```rust
 use scolor::ColorExt;
 

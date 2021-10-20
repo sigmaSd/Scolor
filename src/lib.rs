@@ -1,9 +1,12 @@
 //! Simple Ansi Colors (strives for ~=0 cost)
 //! ```rust,no_run
 //! use scolor::ColorExt;
-//!
 //! println!("{}", "hello".red().bold().underline());
 //! println!("{}", "world".green().red_bg().italic());
+//!
+//! use scolor::{Color, Rgb, ColorType};
+//! const MY_COLOR: Rgb = Rgb {r: 12, g: 100, b: 200, ctype: ColorType::Fg};
+//! println!("{}", "world".rgb(MY_COLOR).bold());
 //! ```
 // Credits to https://stackoverflow.com/a/33206814
 use std::fmt::Display;
@@ -13,7 +16,7 @@ type OneStyle<'a, F> = ColorFmt<'a, F, 0, 1>;
 
 pub trait Color {
     type F;
-    fn rgb(&self, r: u8, g: u8, b: u8, ctype: ColorType) -> OneColor<Self::F>;
+    fn rgb(&self, color: Rgb) -> OneColor<Self::F>;
     fn style(&self, effect: Effect) -> OneStyle<Self::F>;
 }
 
@@ -42,10 +45,10 @@ where
     T: Display,
 {
     type F = T;
-    fn rgb(&self, r: u8, g: u8, b: u8, ctype: ColorType) -> OneColor<Self::F> {
+    fn rgb(&self, color: Rgb) -> OneColor<Self::F> {
         ColorFmt {
             fmt: self,
-            color: [Rgb { r, g, b, ctype }],
+            color: [color],
             effect: [],
         }
     }
@@ -64,10 +67,20 @@ where
 {
     type F = <T as Color>::F;
     fn rgb_fg(&self, r: u8, g: u8, b: u8) -> OneColor<Self::F> {
-        self.rgb(r, g, b, ColorType::Fg)
+        self.rgb(Rgb {
+            r,
+            g,
+            b,
+            ctype: ColorType::Fg,
+        })
     }
     fn rgb_bg(&self, r: u8, g: u8, b: u8) -> OneColor<Self::F> {
-        self.rgb(r, g, b, ColorType::Bg)
+        self.rgb(Rgb {
+            r,
+            g,
+            b,
+            ctype: ColorType::Bg,
+        })
     }
     fn red(&self) -> OneColor<Self::F> {
         self.rgb_fg(255, 0, 0)

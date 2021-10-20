@@ -4,10 +4,6 @@
 //!
 //! println!("{}", "hello".red().bold().underline());
 //! println!("{}", "world".green().red_bg().italic());
-//! println!(
-//!     "{}",
-//!     "world".rgb_with_style(120, 120, 11, ColorType::Fg, Effect::Italic)
-//! );
 //! println!("{}", "!".rgb_fg(123, 12, 50));
 //! ```
 // Credits to https://stackoverflow.com/a/33206814
@@ -16,8 +12,6 @@ use std::fmt::Display;
 pub trait Color {
     fn rgb(&self, r: u8, g: u8, b: u8, ctype: ColorType) -> ColorString;
     fn style(&self, effect: Effect) -> ColorString;
-    /// This is a little bit more performant than `str.rgb(..).style(..)`
-    fn rgb_with_style(&self, r: u8, g: u8, b: u8, ctype: ColorType, effect: Effect) -> ColorString;
 }
 
 pub trait ColorExt {
@@ -54,13 +48,6 @@ where
         ColorString {
             string: self,
             color: None,
-            effect: Some(effect),
-        }
-    }
-    fn rgb_with_style(&self, r: u8, g: u8, b: u8, ctype: ColorType, effect: Effect) -> ColorString {
-        ColorString {
-            string: self,
-            color: Some(Rgb { r, g, b, ctype }),
             effect: Some(effect),
         }
     }

@@ -6,9 +6,9 @@ use scolor::ColorExt;
 println!("{}", "hello".red().bold().underline());
 println!("{}", "world".green().red_bg().italic());
 
-use scolor::{Color, Rgb, ColorType};
-const MY_COLOR: Rgb = Rgb {r: 12, g: 100, b: 200, ctype: ColorType::Fg};
-println!("{}", "world".rgb(MY_COLOR).bold());
+use scolor::{Color, ColorDesc, ColorType, Effect};
+const MY_COLOR: ColorDesc = ColorDesc {r: 12, g: 100, b: 200, color_type: ColorType::Fg};
+println!("{}", "world".color(MY_COLOR).style(Effect::Bold));
 ```
 
 License: MIT

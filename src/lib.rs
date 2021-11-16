@@ -4,25 +4,25 @@
 //! println!("{}", "hello".red().bold().underline());
 //! println!("{}", "world".green().red_bg().italic());
 //!
-//! use scolor::{Color, Rgb, ColorType};
-//! const MY_COLOR: Rgb = Rgb {r: 12, g: 100, b: 200, ctype: ColorType::Fg};
-//! println!("{}", "world".rgb(MY_COLOR).bold());
+//! use scolor::{Color, ColorDesc, ColorType, Effect};
+//! const MY_COLOR: ColorDesc = ColorDesc {r: 12, g: 100, b: 200, color_type: ColorType::Fg};
+//! println!("{}", "world".color(MY_COLOR).style(Effect::Bold));
 //! ```
 // Credits to https://stackoverflow.com/a/33206814
 use std::fmt::Display;
 
 type OneColor<'a, F> = ColorFmt<'a, F, 1, 0>;
-type OneStyle<'a, F> = ColorFmt<'a, F, 0, 1>;
+type OneEffect<'a, F> = ColorFmt<'a, F, 0, 1>;
 
 pub trait Color {
     type F;
-    fn rgb(&self, color: Rgb) -> OneColor<Self::F>;
-    fn style(&self, effect: Effect) -> OneStyle<Self::F>;
+    fn color(&self, color: ColorDesc) -> OneColor<Self::F>;
+    fn style(&self, effect: Effect) -> OneEffect<Self::F>;
 }
 
 pub trait ColorExt {
     type F;
-    fn rgb_fg(&self, r: u8, g: u8, b: u8) -> OneColor<Self::F>;
+    fn rgb(&self, r: u8, g: u8, b: u8) -> OneColor<Self::F>;
     fn rgb_bg(&self, r: u8, g: u8, b: u8) -> OneColor<Self::F>;
     fn red(&self) -> OneColor<Self::F>;
     fn red_bg(&self) -> OneColor<Self::F>;
@@ -34,10 +34,10 @@ pub trait ColorExt {
     fn blue_bg(&self) -> OneColor<Self::F>;
     fn light_blue(&self) -> OneColor<Self::F>;
     fn light_blue_bg(&self) -> OneColor<Self::F>;
-    fn italic(&self) -> OneStyle<Self::F>;
-    fn bold(&self) -> OneStyle<Self::F>;
-    fn underline(&self) -> OneStyle<Self::F>;
-    fn crossed_out(&self) -> OneStyle<Self::F>;
+    fn italic(&self) -> OneEffect<Self::F>;
+    fn bold(&self) -> OneEffect<Self::F>;
+    fn underline(&self) -> OneEffect<Self::F>;
+    fn crossed_out(&self) -> OneEffect<Self::F>;
 }
 
 impl<T> Color for T
@@ -45,14 +45,14 @@ where
     T: Display,
 {
     type F = T;
-    fn rgb(&self, color: Rgb) -> OneColor<Self::F> {
+    fn color(&self, color: ColorDesc) -> OneColor<Self::F> {
         ColorFmt {
             fmt: self,
             color: [color],
             effect: [],
         }
     }
-    fn style(&self, effect: Effect) -> OneStyle<Self::F> {
+    fn style(&self, effect: Effect) -> OneEffect<Self::F> {
         ColorFmt {
             fmt: self,
             color: [],
@@ -66,69 +66,69 @@ where
     T: Color,
 {
     type F = <T as Color>::F;
-    fn rgb_fg(&self, r: u8, g: u8, b: u8) -> OneColor<Self::F> {
-        self.rgb(Rgb {
+    fn rgb(&self, r: u8, g: u8, b: u8) -> OneColor<Self::F> {
+        self.color(ColorDesc {
             r,
             g,
             b,
-            ctype: ColorType::Fg,
+            color_type: ColorType::Fg,
         })
     }
     fn rgb_bg(&self, r: u8, g: u8, b: u8) -> OneColor<Self::F> {
-        self.rgb(Rgb {
+        self.color(ColorDesc {
             r,
             g,
             b,
-            ctype: ColorType::Bg,
+            color_type: ColorType::Bg,
         })
     }
     fn red(&self) -> OneColor<Self::F> {
-        self.rgb_fg(255, 0, 0)
+        self.rgb(255, 0, 0)
     }
     fn red_bg(&self) -> OneColor<Self::F> {
         self.rgb_bg(255, 0, 0)
     }
     fn green(&self) -> OneColor<Self::F> {
-        self.rgb_fg(0, 255, 0)
+        self.rgb(0, 255, 0)
     }
     fn green_bg(&self) -> OneColor<Self::F> {
         self.rgb_bg(0, 255, 0)
     }
     fn yellow(&self) -> OneColor<Self::F> {
-        self.rgb_fg(255, 255, 0)
+        self.rgb(255, 255, 0)
     }
     fn yellow_bg(&self) -> OneColor<Self::F> {
         self.rgb_bg(255, 255, 0)
     }
     fn blue(&self) -> OneColor<Self::F> {
-        self.rgb_fg(0, 0, 255)
+        self.rgb(0, 0, 255)
     }
     fn blue_bg(&self) -> OneColor<Self::F> {
         self.rgb_bg(0, 0, 255)
     }
     fn light_blue(&self) -> OneColor<Self::F> {
-        self.rgb_fg(0, 150, 255)
+        self.rgb(0, 150, 255)
     }
     fn light_blue_bg(&self) -> OneColor<Self::F> {
         self.rgb_bg(0, 150, 255)
     }
-    fn italic(&self) -> OneStyle<Self::F> {
+    fn italic(&self) -> OneEffect<Self::F> {
         self.style(Effect::Italic)
     }
-    fn bold(&self) -> OneStyle<Self::F> {
+    fn bold(&self) -> OneEffect<Self::F> {
         self.style(Effect::Bold)
     }
-    fn underline(&self) -> OneStyle<Self::F> {
+    fn underline(&self) -> OneEffect<Self::F> {
         self.style(Effect::Underline)
     }
-    fn crossed_out(&self) -> OneStyle<Self::F> {
+    fn crossed_out(&self) -> OneEffect<Self::F> {
         self.style(Effect::CrossedOut)
     }
 }
 
 pub struct ColorFmt<'a, D, const C: usize, const E: usize> {
     pub fmt: &'a D,
-    pub color: [Rgb; C],
+    pub color: [ColorDesc; C],
     pub effect: [Effect; E],
 }
 
@@ -187,11 +187,11 @@ impl std::fmt::Display for Effect {
     }
 }
 
-pub struct Rgb {
+pub struct ColorDesc {
     pub r: u8,
     pub g: u8,
     pub b: u8,
-    pub ctype: ColorType,
+    pub color_type: ColorType,
 }
 
 pub enum ColorType {
@@ -199,11 +199,11 @@ pub enum ColorType {
     Bg,
 }
 
-impl std::fmt::Display for Rgb {
+impl std::fmt::Display for ColorDesc {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         const FG_DEL: &str = "38;2";
         const BG_DEL: &str = "48;2";
-        let del = match self.ctype {
+        let del = match self.color_type {
             ColorType::Fg => FG_DEL,
             ColorType::Bg => BG_DEL,
         };

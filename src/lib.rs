@@ -15,7 +15,7 @@
 //!
 //! But the cost is that it's less ergonomic, the API is invoked like this:
 //! ```rust,ignore
-//! println!("{}", "hello".red().green::<2>().bold::<1>().red_bg::<3>().italic::<2>());
+//! println!("{}", "hello".green().bold::<1>().red_bg::<2>().italic::<2>());
 //! ```
 // Credits to https://stackoverflow.com/a/33206814
 use std::fmt::Display;

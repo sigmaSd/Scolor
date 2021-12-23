@@ -8,8 +8,20 @@
 //! const MY_COLOR: ColorDesc = ColorDesc {r: 12, g: 100, b: 200, color_type: ColorType::Fg};
 //! println!("{}", "world".color(MY_COLOR).style(Effect::Bold));
 //! ```
+//!
+//! For even more zero cost power you can enable `zero-cost` feature
+//!
+//! It makes the generated ASCII code as optimal as it can be
+//!
+//! But the cost is its less ergonomic, the API is invoked like this:
+//! ```rs
+//! println!("{}", "hello".red().green::<2>().bold::<1>().red_bg::<3>());
+//! ```
 // Credits to https://stackoverflow.com/a/33206814
 use std::fmt::Display;
+
+#[cfg(feature = "zero-cost")]
+mod advanced;
 
 type OneColor<'a, F> = ColorFmt<'a, F, 1, 0>;
 type OneEffect<'a, F> = ColorFmt<'a, F, 0, 1>;
@@ -126,6 +138,7 @@ where
     }
 }
 
+#[derive(Debug)]
 pub struct ColorFmt<'a, D, const C: usize, const E: usize> {
     pub fmt: &'a D,
     pub color: [ColorDesc; C],
@@ -165,6 +178,7 @@ impl<D: Display, const C: usize, const E: usize> Display for ColorFmt<'_, D, C, 
     }
 }
 
+#[derive(Clone, Copy, Debug)]
 pub enum Effect {
     Bold,
     Faint,
@@ -187,6 +201,7 @@ impl std::fmt::Display for Effect {
     }
 }
 
+#[derive(Clone, Copy, Debug)]
 pub struct ColorDesc {
     pub r: u8,
     pub g: u8,
@@ -194,6 +209,7 @@ pub struct ColorDesc {
     pub color_type: ColorType,
 }
 
+#[derive(Clone, Copy, Debug)]
 pub enum ColorType {
     Fg,
     Bg,

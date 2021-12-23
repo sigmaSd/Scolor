@@ -10,3 +10,7 @@ keywords = ["color", "ansi", "terminal"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+
+[features]
+default = []
+zero-cost = []

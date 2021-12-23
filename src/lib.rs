@@ -13,9 +13,9 @@
 //!
 //! It makes the generated ASCII code as optimal as it can be
 //!
-//! But the cost is its less ergonomic, the API is invoked like this:
-//! ```rs
-//! println!("{}", "hello".red().green::<2>().bold::<1>().red_bg::<3>());
+//! But the cost is that it's less ergonomic, the API is invoked like this:
+//! ```rust,ignore
+//! println!("{}", "hello".red().green::<2>().bold::<1>().red_bg::<3>().italic::<2>());
 //! ```
 // Credits to https://stackoverflow.com/a/33206814
 use std::fmt::Display;

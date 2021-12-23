@@ -11,4 +11,13 @@ const MY_COLOR: ColorDesc = ColorDesc {r: 12, g: 100, b: 200, color_type: ColorT
 println!("{}", "world".color(MY_COLOR).style(Effect::Bold));
 ```
 
+For even more zero cost power you can enable `zero-cost` feature
+
+It makes the generated ASCII code as optimal as it can be
+
+But the cost is that it's less ergonomic, the API is invoked like this:
+```rust
+println!("{}", "hello".red().green::<2>().bold::<1>().red_bg::<3>().italic::<2>());
+```
+
 License: MIT

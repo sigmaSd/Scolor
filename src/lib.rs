@@ -162,7 +162,7 @@ impl<D: Display, const C: usize, const E: usize> Display for ColorFmt<'_, D, C, 
             write!(f, "{}", COMPONENT_DEL)?;
         }
         for (idx, effect) in self.effect.iter().enumerate() {
-            if C != 0 {
+            if idx == 0 && C != 0 {
                 write!(f, "{}", COMPONENT_DEL)?;
             }
             write!(f, "{}", effect)?;

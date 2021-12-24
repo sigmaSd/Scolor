@@ -1,6 +1,6 @@
 [package]
 name = "scolor"
-version = "7.0.1"
+version = "8.0.0"
 edition = "2021"
 description = "Simple ansi colors"
 repository = "https://github.com/sigmaSd/scolor"

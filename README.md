@@ -1,5 +1,7 @@
 # scolor
 
+To use this branch you need to add `#![feature(const_trait_impl)]` to the top of your crate
+
 Simple Ansi Colors (strives for ~=0 cost)
 ```rust
 use scolor::ColorExt;
@@ -11,27 +13,9 @@ const LIGHT_BLUE_ITALIC_BOLD: CustomStyle<2, 2> =
 ([ColorDesc::light_blue(), ColorDesc::red_bg()], [Effect::Italic, Effect::Bold]);
 
 println!("{}", "world".custom(LIGHT_BLUE_ITALIC_BOLD));
-```
 
-Const equivalent of trait functions are provided as freestanding top-level functions
-```rust
-const BLUE_WORLD: scolor::ColorFmt<'_,str,1,0> = scolor::blue("world");
-```
+All methods are usable in const context.
 
-For even more zero cost power you can enable `zero-cost` feature
-
-It makes the generated ASCII code as optimal as it can be
-
-But the cost is that it's less ergonomic, the API is invoked like this:
-```rust
-use scolor::ColorExt;
-println!("{}", "hello".green().bold::<1>().red_bg::<2>().italic::<2>());
-
-use scolor::{ColorDesc, ColorFmt, Effect, green};
-const _:() = {
-    let fmt = green("hello").italic::<1>().bold::<2>().red_bg::<2>().crossed_out::<3>();
-    assert!(matches!(ColorFmt{fmt:"hello",color:[ColorDesc::green(),ColorDesc::red_bg()],effect:[Effect::Italic, Effect::Bold]}, fmt));
-};
 ```
 
 License: MIT

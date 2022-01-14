@@ -13,4 +13,3 @@ keywords = ["color", "ansi", "terminal"]
 
 [features]
 default = []
-zero-cost = []

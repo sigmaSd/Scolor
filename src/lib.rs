@@ -1,3 +1,5 @@
+//! To use this branch you need to add `#![feature(const_trait_impl)]` to the top of your crate
+//!
 //! Simple Ansi Colors (strives for ~=0 cost)
 //! ```rust
 //! use scolor::ColorExt;
@@ -12,43 +14,22 @@
 //!
 //! println!("{}", "world".custom(LIGHT_BLUE_ITALIC_BOLD));
 //! # }
-//! ```
 //!
-//! Const equivalent of trait functions are provided as freestanding top-level functions
-//! ```rust
-//! const BLUE_WORLD: scolor::ColorFmt<'_,str,1,0> = scolor::blue("world");
-//! ```
+//! All methods are usable in const context.
 //!
-//! For even more zero cost power you can enable `zero-cost` feature
-//!
-//! It makes the generated ASCII code as optimal as it can be
-//!
-//! But the cost is that it's less ergonomic, the API is invoked like this:
-//! ```rust
-//! use scolor::ColorExt;
-//! # #[cfg(feature="zero-cost")]
-//! println!("{}", "hello".green().bold::<1>().red_bg::<2>().italic::<2>());
-//!
-//! use scolor::{ColorDesc, ColorFmt, Effect, green};
-//! # #[cfg(feature="zero-cost")]
-//! const _:() = {
-//!     let fmt = green("hello").italic::<1>().bold::<2>().red_bg::<2>().crossed_out::<3>();
-//!     assert!(matches!(ColorFmt{fmt:"hello",color:[ColorDesc::green(),ColorDesc::red_bg()],effect:[Effect::Italic, Effect::Bold]}, fmt));
-//! };
 
 //! ```
+#![feature(const_trait_impl)]
+#![feature(generic_const_exprs)]
 // Credits to https://stackoverflow.com/a/33206814
 use std::fmt::Display;
 
-#[cfg(feature = "zero-cost")]
 mod advanced;
 
 mod color_desc;
 pub use color_desc::*;
 mod effect;
 pub use effect::*;
-mod konst;
-pub use konst::*;
 
 pub type CustomStyle<const C: usize, const E: usize> = ([ColorDesc; C], [Effect; E]);
 
@@ -59,6 +40,37 @@ pub trait Color {
     fn custom<const C: usize, const E: usize>(
         &self,
         color_and_effect: CustomStyle<C, E>,
+    ) -> ColorFmt<'_, Self, C, E>;
+    fn color(&self, color: ColorDesc) -> OneColor<Self>;
+    fn style(&self, effect: Effect) -> OneEffect<Self>;
+}
+
+pub trait ColorExt
+where
+    Self: Color,
+{
+    fn rgb(&self, r: u8, g: u8, b: u8) -> OneColor<Self>;
+    fn rgb_bg(&self, r: u8, g: u8, b: u8) -> OneColor<Self>;
+    fn red(&self) -> OneColor<Self>;
+    fn red_bg(&self) -> OneColor<Self>;
+    fn green(&self) -> OneColor<Self>;
+    fn green_bg(&self) -> OneColor<Self>;
+    fn yellow(&self) -> OneColor<Self>;
+    fn yellow_bg(&self) -> OneColor<Self>;
+    fn blue(&self) -> OneColor<Self>;
+    fn blue_bg(&self) -> OneColor<Self>;
+    fn light_blue(&self) -> OneColor<Self>;
+    fn light_blue_bg(&self) -> OneColor<Self>;
+    fn italic(&self) -> OneEffect<Self>;
+    fn bold(&self) -> OneEffect<Self>;
+    fn underline(&self) -> OneEffect<Self>;
+    fn crossed_out(&self) -> OneEffect<Self>;
+}
+
+impl<T> const Color for T {
+    fn custom<const C: usize, const E: usize>(
+        &self,
+        color_and_effect: CustomStyle<C, E>,
     ) -> ColorFmt<'_, Self, C, E> {
         ColorFmt {
             fmt: self,
@@ -66,70 +78,80 @@ pub trait Color {
             effect: color_and_effect.1,
         }
     }
+
     fn color(&self, color: ColorDesc) -> OneColor<Self> {
         self.custom(([color], []))
     }
+
     fn style(&self, effect: Effect) -> OneEffect<Self> {
         self.custom(([], [effect]))
     }
 }
-
-pub trait ColorExt
-where
-    Self: Color,
-{
+impl<T> const ColorExt for T {
     fn rgb(&self, r: u8, g: u8, b: u8) -> OneColor<Self> {
         self.color(ColorDesc::rgb(r, g, b))
     }
+
     fn rgb_bg(&self, r: u8, g: u8, b: u8) -> OneColor<Self> {
         self.color(ColorDesc::rgb_bg(r, g, b))
     }
+
     fn red(&self) -> OneColor<Self> {
         self.rgb(255, 0, 0)
     }
+
     fn red_bg(&self) -> OneColor<Self> {
         self.rgb_bg(255, 0, 0)
     }
+
     fn green(&self) -> OneColor<Self> {
         self.rgb(0, 255, 0)
     }
+
     fn green_bg(&self) -> OneColor<Self> {
         self.rgb_bg(0, 255, 0)
     }
+
     fn yellow(&self) -> OneColor<Self> {
         self.rgb(255, 255, 0)
     }
+
     fn yellow_bg(&self) -> OneColor<Self> {
         self.rgb_bg(255, 255, 0)
     }
+
     fn blue(&self) -> OneColor<Self> {
         self.rgb(0, 0, 255)
     }
+
     fn blue_bg(&self) -> OneColor<Self> {
         self.rgb_bg(0, 0, 255)
     }
+
     fn light_blue(&self) -> OneColor<Self> {
         self.rgb(0, 150, 255)
     }
+
     fn light_blue_bg(&self) -> OneColor<Self> {
         self.rgb_bg(0, 150, 255)
     }
+
     fn italic(&self) -> OneEffect<Self> {
         self.style(Effect::Italic)
     }
+
     fn bold(&self) -> OneEffect<Self> {
         self.style(Effect::Bold)
     }
+
     fn underline(&self) -> OneEffect<Self> {
         self.style(Effect::Underline)
     }
+
     fn crossed_out(&self) -> OneEffect<Self> {
         self.style(Effect::CrossedOut)
     }
 }
-
-impl<T: Display> Color for T {}
-impl<T: Display> ColorExt for T {}
 
 #[derive(Debug)]
 pub struct ColorFmt<'a, D: ?Sized, const C: usize, const E: usize> {

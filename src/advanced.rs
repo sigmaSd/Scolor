@@ -2,23 +2,11 @@ use crate::{ColorDesc, ColorFmt, Effect};
 
 // Color trait specialization
 impl<'a, D: ?Sized, const C: usize, const E: usize> ColorFmt<'a, D, C, E> {
-    pub const fn custom<
-        const RESULT_C: usize,
-        const RESULT_E: usize,
-        const NEW_C: usize,
-        const NEW_E: usize,
-    >(
+    pub const fn custom<const NEW_C: usize, const NEW_E: usize>(
         self,
         (new_color, new_effect): ([ColorDesc; NEW_C], [Effect; NEW_E]),
-    ) -> ColorFmt<'a, D, RESULT_C, RESULT_E> {
-        if RESULT_C != C + NEW_C {
-            panic!("Generic must be equal to the total number of colors.")
-        }
-        if RESULT_E != E + NEW_E {
-            panic!("Generic must be equal to the total number of styles.")
-        }
-
-        let mut result_color: [ColorDesc; RESULT_C] = [ColorDesc::rgb(0, 0, 0); RESULT_C];
+    ) -> ColorFmt<'a, D, { C + NEW_C }, { E + NEW_E }> {
+        let mut result_color: [ColorDesc; C + NEW_C] = [ColorDesc::rgb(0, 0, 0); { C + NEW_C }];
         {
             let mut idx = 0;
             while idx < C {
@@ -28,13 +16,13 @@ impl<'a, D: ?Sized, const C: usize, const E: usize> ColorFmt<'a, D, C, E> {
         }
         {
             let mut idx = C;
-            while idx < RESULT_C {
+            while idx < C + NEW_C {
                 result_color[idx] = new_color[idx - C];
                 idx += 1;
             }
         }
 
-        let mut result_effect: [Effect; RESULT_E] = [Effect::CrossedOut; RESULT_E];
+        let mut result_effect: [Effect; E + NEW_E] = [Effect::CrossedOut; { E + NEW_E }];
         {
             let mut idx = 0;
             while idx < E {
@@ -44,7 +32,7 @@ impl<'a, D: ?Sized, const C: usize, const E: usize> ColorFmt<'a, D, C, E> {
         }
         {
             let mut idx = E;
-            while idx < RESULT_E {
+            while idx < E + NEW_E {
                 result_effect[idx] = new_effect[idx - E];
                 idx += 1;
             }
@@ -57,62 +45,62 @@ impl<'a, D: ?Sized, const C: usize, const E: usize> ColorFmt<'a, D, C, E> {
         }
     }
 
-    pub const fn color<const CC: usize>(self, color: ColorDesc) -> ColorFmt<'a, D, CC, E> {
+    pub const fn color(self, color: ColorDesc) -> ColorFmt<'a, D, { C + 1 }, { E + 0 }> {
         self.custom(([color], []))
     }
-    pub const fn style<const EE: usize>(self, effect: Effect) -> ColorFmt<'a, D, C, EE> {
+    pub const fn style(self, effect: Effect) -> ColorFmt<'a, D, { C + 0 }, { E + 1 }> {
         self.custom(([], [effect]))
     }
 }
 
 // ColorExt trait specialization
 impl<'a, D: ?Sized, const C: usize, const E: usize> ColorFmt<'a, D, C, E> {
-    pub const fn rgb<const CC: usize>(self, r: u8, g: u8, b: u8) -> ColorFmt<'a, D, CC, E> {
+    pub const fn rgb(self, r: u8, g: u8, b: u8) -> ColorFmt<'a, D, { C + 1 }, { E + 0 }> {
         self.color(ColorDesc::rgb(r, g, b))
     }
-    pub const fn rgb_bg<const CC: usize>(self, r: u8, g: u8, b: u8) -> ColorFmt<'a, D, CC, E> {
+    pub const fn rgb_bg(self, r: u8, g: u8, b: u8) -> ColorFmt<'a, D, { C + 1 }, { E + 0 }> {
         self.color(ColorDesc::rgb_bg(r, g, b))
     }
-    pub const fn red<const CC: usize>(self) -> ColorFmt<'a, D, CC, E> {
+    pub const fn red(self) -> ColorFmt<'a, D, { C + 1 }, { E + 0 }> {
         self.rgb(255, 0, 0)
     }
-    pub const fn red_bg<const CC: usize>(self) -> ColorFmt<'a, D, CC, E> {
+    pub const fn red_bg(self) -> ColorFmt<'a, D, { C + 1 }, { E + 0 }> {
         self.rgb_bg(255, 0, 0)
     }
-    pub const fn green<const CC: usize>(self) -> ColorFmt<'a, D, CC, E> {
+    pub const fn green(self) -> ColorFmt<'a, D, { C + 1 }, { E + 0 }> {
         self.rgb(0, 255, 0)
     }
-    pub const fn green_bg<const CC: usize>(self) -> ColorFmt<'a, D, CC, E> {
+    pub const fn green_bg(self) -> ColorFmt<'a, D, { C + 1 }, { E + 0 }> {
         self.rgb_bg(0, 255, 0)
     }
-    pub const fn yellow<const CC: usize>(self) -> ColorFmt<'a, D, CC, E> {
+    pub const fn yellow(self) -> ColorFmt<'a, D, { C + 1 }, { E + 0 }> {
         self.rgb(255, 255, 0)
     }
-    pub const fn yellow_bg<const CC: usize>(self) -> ColorFmt<'a, D, CC, E> {
+    pub const fn yellow_bg(self) -> ColorFmt<'a, D, { C + 1 }, { E + 0 }> {
         self.rgb_bg(255, 255, 0)
     }
-    pub const fn blue<const CC: usize>(self) -> ColorFmt<'a, D, CC, E> {
+    pub const fn blue(self) -> ColorFmt<'a, D, { C + 1 }, { E + 0 }> {
         self.rgb(0, 0, 255)
     }
-    pub const fn blue_bg<const CC: usize>(self) -> ColorFmt<'a, D, CC, E> {
+    pub const fn blue_bg(self) -> ColorFmt<'a, D, { C + 1 }, { E + 0 }> {
         self.rgb_bg(0, 0, 255)
     }
-    pub const fn light_blue<const CC: usize>(self) -> ColorFmt<'a, D, CC, E> {
+    pub const fn light_blue(self) -> ColorFmt<'a, D, { C + 1 }, { E + 0 }> {
         self.rgb(0, 150, 255)
     }
-    pub const fn light_blue_bg<const CC: usize>(self) -> ColorFmt<'a, D, CC, E> {
+    pub const fn light_blue_bg(self) -> ColorFmt<'a, D, { C + 1 }, { E + 0 }> {
         self.rgb_bg(0, 150, 255)
     }
-    pub const fn italic<const EE: usize>(self) -> ColorFmt<'a, D, C, EE> {
+    pub const fn italic(self) -> ColorFmt<'a, D, { C + 0 }, { E + 1 }> {
         self.style(Effect::Italic)
     }
-    pub const fn bold<const EE: usize>(self) -> ColorFmt<'a, D, C, EE> {
+    pub const fn bold(self) -> ColorFmt<'a, D, { C + 0 }, { E + 1 }> {
         self.style(Effect::Bold)
     }
-    pub const fn underline<const EE: usize>(self) -> ColorFmt<'a, D, C, EE> {
+    pub const fn underline(self) -> ColorFmt<'a, D, { C + 0 }, { E + 1 }> {
         self.style(Effect::Underline)
     }
-    pub const fn crossed_out<const EE: usize>(self) -> ColorFmt<'a, D, C, EE> {
+    pub const fn crossed_out(self) -> ColorFmt<'a, D, { C + 0 }, { E + 1 }> {
         self.style(Effect::CrossedOut)
     }
 }

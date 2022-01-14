@@ -37,6 +37,8 @@
 //! };
 
 //! ```
+//!
+//! For an even better API you can use the nightly branch <https://github.com/sigmaSd/Scolor/tree/nightly>
 // Credits to https://stackoverflow.com/a/33206814
 use std::fmt::Display;
 

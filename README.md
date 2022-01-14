@@ -34,4 +34,6 @@ const _:() = {
 };
 ```
 
+For an even better API you can use the nightly branch <https://github.com/sigmaSd/Scolor/tree/nightly>
+
 License: MIT
